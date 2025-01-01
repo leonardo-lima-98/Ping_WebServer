@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESP32 Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+        }
+        input[type=checkbox]{
+            height: 0;
+            width: 0;
+            visibility: hidden;
+        }
+        label {
+            cursor: pointer;
+            text-indent: -9999px;
+            width: 100px;
+            height: 50px;
+            background: #f44336;
+            display: block;
+            border-radius: 100px;
+            position: relative;
+        }
+        label:after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 90px;
+            transition: 0.3s;
+        }
+        input:checked + label {
+            background: #179588;
+        }
+        input:checked + label:after {
+            left: calc(100% - 5px);
+            transform: translateX(-100%);
+        }
+        label:active:after {
+            width: 70px;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>ESP32 Controle</h1>
+    <div id="status">Estado: Carregando...</div>
+    <!-- <button class="button on" onclick="setState()">LIGAR</button>
+    <button class="button off" onclick="setState('OFF')">DESLIGAR</button> -->
+    <input type="checkbox" id="switch" onclick="setState()" /><label for="switch">Toggle</label>
+    <script>
+        function updateState() {
+            fetch('/getState', {method: 'GET'})
+                .then(response => { if (response.text() == "1") {return "ON";} return "OFF";})
+                .then(state => {
+                    document.getElementById('status').innerHTML = 'Estado: ' + state;
+                });
+        }
+
+        function setState() {
+            fetch('/getState', {method: 'GET'})
+            .then(response => { if (response.text() != "ON") {return "ON";} return "OFF";})
+            fetch('/setState?state=' + response)
+                .then(response => {
+                    if(response.ok) {
+                        updateState();
+                    }
+                });
+        }
+
+        // Update state every 2 seconds
+        setInterval(updateState, 10000);
+        // Initial state update
+        updateState();
+    </script>
+</body>
+</html>
