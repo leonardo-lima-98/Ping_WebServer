@@ -17,6 +17,11 @@ const char* hostname = "esp32-device";
 // Servidor DB será Pingado
 const char* ip = "192.168.1.250"; // Substitua pelo IP do dispositivo que você deseja fazer o ping
 
+// Web server on port 80
+WebServer server(80);
+WiFiClient espClient;
+PubSubClient client(espClient);
+
 // Valida conexão com servidor, define estado
 void validStateServer() { // Essa função tem como objetivo tanto validar o estado do servidor para as funções quanto para o HTML do server local
   if (Ping.ping(ip)) { // Aqui Ping.ping(ip) retorna 1 ou 0
@@ -36,16 +41,21 @@ void handlePing() {
   int attempt = 0;                 // Contador de tentativas
   // Tentativa inicial de validar o servidor
   while (attempt < maxAttempts) {
-    delay(15000);                  // Aguarda 15 segundos entre as tentativas
+    delay(10000);                  // Aguarda 15 segundos entre as tentativas
     if (Ping.ping(ip) == !serverState) {
       validStateServer();
+      server.send(200, "text/plain", "OK");
       break;
     }
     Serial.println(attempt);
     attempt++;
     serverStateMessage = "Servidor Indisponivel"; // Altera a mensagem global
     Serial.println("Servidor Indisponivel");
-    break;
+    if (attempt == maxAttempts) {
+      break;
+      Serial.println("break");
+      server.send(500, "text/plain", "Servidor Indisponivel");
+    }
   }
 }
 
@@ -54,15 +64,11 @@ void switchServerState() {
   Serial.println("Alternando estado do servidor...");
   int currentState = digitalRead(controlPin);  // Lê o estado atual do pino
   int newState = !currentState;  // Inverte o estado lógico do pino
+  digitalWrite(controlPin, newState);  // Retorna ao estado original
   delay(700);  // Mantém o estado alterado por 0.7 segundo
   digitalWrite(controlPin, currentState);  // Retorna ao estado original
   handlePing();
 }
-
-// Web server on port 80
-WebServer server(80);
-WiFiClient espClient;
-PubSubClient client(espClient);
 
 void setup_wifi() {
   Serial.begin(115200);
@@ -109,9 +115,11 @@ void handleRoot() {
 
 void handleGetState() {
   server.send(200, "text/plain", String(serverState));
+  Serial.println(serverState);
 }
 
 void handleSetState() {
+  server.send(200, "text/plain", "OK");
   switchServerState();
 }
 
