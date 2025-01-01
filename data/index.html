@@ -61,28 +61,37 @@
     <div id="status">Estado: Carregando...</div>
     <!-- <button class="button on" onclick="setState()">LIGAR</button>
     <button class="button off" onclick="setState('OFF')">DESLIGAR</button> -->
-    <input type="checkbox" id="switch" onclick="setState()" /><label for="switch">Toggle</label>
+    <input type="checkbox" id="switch" onclick="setState()" /><label for="switch"></label>
     <script>
+        function mockFetch(url) {
+            return new Promise(resolve => {
+                // Mockando a resposta
+                const mockResponse = Math.random() > 0.5 ? "1" : "0";
+                resolve({
+                    text: () => Promise.resolve(mockResponse) // Simula o método text() do fetch
+                });
+            });
+        }
         function updateState() {
-            fetch('/getState', {method: 'GET'})
-                .then(response => { if (response.text() == "1") {return "ON";} return "OFF";})
+            // mockFetch('/getState', { method: 'GET' })  // Mock de valores, para usar é descomentar essa linha e comentar a de baixo
+            fetch('/getState', { method: 'GET' })
+                .then(response => response.text())
                 .then(state => {
-                    document.getElementById('status').innerHTML = 'Estado: ' + state;
+                    // Atualiza o texto do estado
+                    document.getElementById('status').innerHTML = 'Estado: ' + (state === '1' ? 'ON' : 'OFF');
+                    // Atualiza o estado visual do botão
+                    const toggle = document.getElementById('switch');
+                    toggle.checked = (state === '1'); // Marca ou desmarca o botão baseado no estado
                 });
         }
+
 
         function setState() {
-            fetch('/getState', {method: 'GET'})
-            .then(response => { if (response.text() != "ON") {return "ON";} return "OFF";})
-            fetch('/setState?state=' + response)
-                .then(response => {
-                    if(response.ok) {
-                        updateState();
-                    }
-                });
+            console.log('Botão clicado!');
+            fetch('/setState', {method: 'GET'})
         }
 
-        // Update state every 2 seconds
+        // Update state every 10 seconds
         setInterval(updateState, 10000);
         // Initial state update
         updateState();
