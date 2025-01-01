@@ -45,6 +45,7 @@ void handlePing() {
     attempt++;
     serverStateMessage = "Servidor Indisponivel"; // Altera a mensagem global
     Serial.println("Servidor Indisponivel");
+    break;
   }
 }
 
