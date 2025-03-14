@@ -10,6 +10,7 @@
 const int controlPin = 2;  // LED_BUILTIN no ESP32
 const int inPin = 19;
 const int outPin = 18;
+const int bootPin = 21;
 bool serverState = false;
 const char* serverStateMessage = "";
 
@@ -58,10 +59,16 @@ void handlePing() {
     }
   }
 }
+void startBoot() {
+  digitalWrite(bootPin, HIGH);
+  delay(100);
+  digitalWrite(bootPin, LOW);
+}
 
 // Função que simula o botão de pulso
 void switchServerState() {
   Serial.println("Alternando estado do servidor...");
+  startBoot()
   int currentState = digitalRead(controlPin);  // Lê o estado atual do pino
   int newState = !currentState;  // Inverte o estado lógico do pino
   digitalWrite(controlPin, newState);  // Retorna ao estado original
@@ -154,6 +161,7 @@ void setup() {
   
   // Initialize pin
   pinMode(outPin, OUTPUT);
+  pinMode(bootPin, OUTPUT);
   pinMode(inPin, INPUT_PULLDOWN);
   digitalWrite(outPin, HIGH);
   pinMode(controlPin, OUTPUT);
