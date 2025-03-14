@@ -7,7 +7,9 @@
 #include <ESPping.h>
 
 // Pin definition
-const int controlPin = 18;  // LED_BUILTIN no ESP32
+const int controlPin = 2;  // LED_BUILTIN no ESP32
+const int inPin = 19;
+const int outPin = 18;
 bool serverState = false;
 const char* serverStateMessage = "";
 
@@ -27,11 +29,9 @@ void validStateServer() { // Essa função tem como objetivo tanto validar o est
   if (Ping.ping(ip)) { // Aqui Ping.ping(ip) retorna 1 ou 0
     serverState = true;                 // Servidor está ativo
     serverStateMessage = "Servidor Ativo";
-    Serial.println("Servidor Ativo");
   } else {
     serverState = false;                // Servidor está desativado
     serverStateMessage = "Servidor Desativado";
-    Serial.println("Servidor Desativado");
   }
 }
 
@@ -81,8 +81,6 @@ void setup_wifi() {
   }
 
   Serial.println("Conectado ao WiFi!");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
 
   // Agora, depois de se conectar ao Wi-Fi, configuramos o mDNS
   if (MDNS.begin(hostname)) {  // Define o nome mDNS para o dispositivo
@@ -136,6 +134,9 @@ void listFiles() {
   }
 }
 
+
+
+
 void setup() {
   
   Serial.begin(115200);
@@ -150,31 +151,36 @@ void setup() {
   
   // List all files in SPIFFS
   listFiles();
-
+  
   // Initialize pin
+  pinMode(outPin, OUTPUT);
+  pinMode(inPin, INPUT_PULLDOWN);
+  digitalWrite(outPin, HIGH);
   pinMode(controlPin, OUTPUT);
   digitalWrite(controlPin, serverState ? HIGH : LOW);
   Serial.println("Pin initialized");
-
+  
   // Setup WiFi
   setup_wifi();
   // Valida o estado do servidor
   validStateServer();
-
+  Serial.println(serverStateMessage);
   // Configure web server routes
   server.on("/", handleRoot);
   server.on("/getState", handleGetState);
   server.on("/setState", handleSetState);
   server.begin();
-  Serial.println("HTTP server started");
-  Serial.println("You can also access the server at: http://" + WiFi.localIP().toString());
-
-  Serial.println("Setup complete");
+  Serial.println("\nSetup complete");
 }
 
 void loop() {
   // Handle web server clients
   server.handleClient();
   // Give time to background tasks
+  bool botaoPressionado = digitalRead(inPin); // Se o botão fechar o contato, o pino de entrada recebe HIGH
+  
+  if (botaoPressionado) {
+    switchServerState();
+  } 
   delay(10);
 }
